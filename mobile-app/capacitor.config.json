@@ -1,0 +1,13 @@
+{
+  "appId": "org.museum.ai",
+  "appName": "MuseumApp",
+  "webDir": "dist",
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    },
+    "BarcodeScanner": {
+      "googleBarcodeScannerModuleInstallState": "WAIT_FOR_ACTIVITY"
+    }
+  }
+}
