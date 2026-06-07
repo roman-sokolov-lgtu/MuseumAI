@@ -177,7 +177,7 @@ async def get_welcome(request: WelcomeRequest, db: Session = Depends(database.ge
             response.raise_for_status()
             answer = response.json()["message"]["content"]
     except Exception as e:
-        answer = f"Техническая ошибка: ИИ недоступен. Подробности для разработчика: {str(e)}. Проверьте, запущена ли Ollama."
+        answer = f"Техническая ошибка: ИИ недоступен. Подробности: {repr(e)}"
     
     return {"answer": answer}
 
