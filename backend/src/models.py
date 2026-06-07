@@ -23,7 +23,7 @@ class Exhibit(Base):
     admin_id = Column(Integer, ForeignKey("admin.admin_id"), nullable=False)
     
     admin = relationship("Admin", backref="exhibits")
-    sessions = relationship("Session", back_populates="exhibit")
+    sessions = relationship("Session", back_populates="exhibit", cascade="all, delete-orphan")
 
     @property
     def admin_login(self):
@@ -38,7 +38,7 @@ class Session(Base):
     exhibit_id = Column(Integer, ForeignKey("exhibit.exhibit_id"), nullable=False)
     
     exhibit = relationship("Exhibit", back_populates="sessions")
-    queries = relationship("Query", back_populates="session")
+    queries = relationship("Query", back_populates="session", cascade="all, delete-orphan")
 
 class Query(Base):
     __tablename__ = "query"
@@ -48,7 +48,7 @@ class Query(Base):
     session_id = Column(Integer, ForeignKey("session.session_id"), nullable=False)
     
     session = relationship("Session", back_populates="queries")
-    answers = relationship("Answer", back_populates="query")
+    answers = relationship("Answer", back_populates="query", cascade="all, delete-orphan")
 
 class Answer(Base):
     __tablename__ = "answer"
