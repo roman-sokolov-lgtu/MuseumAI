@@ -161,7 +161,7 @@ async def get_welcome(request: WelcomeRequest, db: Session = Depends(database.ge
     )
     
     try:
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with httpx.AsyncClient(timeout=300.0) as client:
             response = await client.post(
                 "http://host.docker.internal:11434/api/chat",
                 json={
@@ -272,7 +272,7 @@ async def ask_assistant(request: AskRequest, db: Session = Depends(database.get_
     import time
     start_time = time.time()
     try:
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with httpx.AsyncClient(timeout=300.0) as client:
             response = await client.post(
                 "http://host.docker.internal:11434/api/chat",
                 json={
