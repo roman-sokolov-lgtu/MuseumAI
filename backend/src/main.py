@@ -411,7 +411,7 @@ def get_dialogs(db: Session = Depends(database.get_db), current_admin: models.Ad
             "id": str(s.session_id),
             "sessionId": f"SES-{s.session_start.strftime('%Y%m%d')}-{s.session_id:03d}",
             "exhibitName": s.exhibit.exhibit_name if s.exhibit else "Неизвестный экспонат",
-            "date": s.session_start.strftime('%d.%m.%Y %H:%M'),
+            "date": (s.session_start + datetime.timedelta(hours=3)).strftime('%d.%m.%Y %H:%M'),
             "duration": duration_str,
             "messagesCount": len(messages),
             "messages": messages
