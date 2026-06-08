@@ -1,6 +1,6 @@
 import { authFetch } from "../utils/api";
 import { useState, useEffect } from "react";
-import { Plus, Search, Edit, Trash2, QrCode, Printer } from "lucide-react";
+import { Plus, Search, Edit, Trash2, QrCode, Printer, ChevronDown } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
 import ExhibitDialog from "../components/ExhibitDialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../components/ui/dialog";
@@ -21,6 +21,9 @@ export interface Exhibit {
 export default function Exhibits() {
   const [exhibits, setExhibits] = useState<Exhibit[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [centuryFilter, setCenturyFilter] = useState("");
+  const [yearFrom, setYearFrom] = useState("");
+  const [yearTo, setYearTo] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingExhibit, setEditingExhibit] = useState<Exhibit | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -54,12 +57,42 @@ export default function Exhibits() {
     }
   };
 
-  const filteredExhibits = exhibits.filter((exhibit) =>
-    exhibit.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    exhibit.author?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    exhibit.period.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    exhibit.category.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const extractYears = (text: string) => {
+    const matches = text.match(/\d{4}/g);
+    if (!matches) return [];
+    return matches.map(Number);
+  };
+
+  const filteredExhibits = exhibits.filter((exhibit) => {
+    const matchesSearch = 
+      exhibit.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      exhibit.author?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      exhibit.period.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      exhibit.category.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const years = extractYears(exhibit.period);
+    
+    let matchesCentury = true;
+    if (centuryFilter) {
+      if (centuryFilter === "18") matchesCentury = exhibit.period.includes("18") || years.some(y => y >= 1700 && y <= 1799);
+      if (centuryFilter === "19") matchesCentury = exhibit.period.includes("19") || years.some(y => y >= 1800 && y <= 1899);
+      if (centuryFilter === "20") matchesCentury = exhibit.period.includes("20") || years.some(y => y >= 1900 && y <= 1999);
+      if (centuryFilter === "21") matchesCentury = exhibit.period.includes("21") || years.some(y => y >= 2000 && y <= 2099);
+    }
+
+    let matchesYears = true;
+    if (yearFrom || yearTo) {
+      const from = yearFrom ? parseInt(yearFrom) : 0;
+      const to = yearTo ? parseInt(yearTo) : 9999;
+      if (years.length > 0) {
+        matchesYears = years.some(y => y >= from && y <= to);
+      } else {
+        matchesYears = false; // Cannot filter by precise year if no year is found in the period text
+      }
+    }
+
+    return matchesSearch && matchesCentury && matchesYears;
+  });
 
   const handleAdd = () => {
     setEditingExhibit(null);
@@ -136,9 +169,9 @@ export default function Exhibits() {
         </Button>
       </div>
 
-      {/* Search */}
-      <div className="mb-6">
-        <div className="relative max-w-md">
+      {/* Filters */}
+      <div className="flex flex-wrap gap-4 mb-6">
+        <div className="relative max-w-md flex-1 min-w-[250px]">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
           <input
             type="text"
@@ -146,6 +179,39 @@ export default function Exhibits() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        
+        <div className="relative min-w-[160px]">
+          <select
+            value={centuryFilter}
+            onChange={(e) => setCenturyFilter(e.target.value)}
+            className="w-full pl-4 pr-10 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
+          >
+            <option value="">Любой век</option>
+            <option value="18">XVIII век (1700-е)</option>
+            <option value="19">XIX век (1800-е)</option>
+            <option value="20">XX век (1900-е)</option>
+            <option value="21">XXI век (2000-е)</option>
+          </select>
+          <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            placeholder="Год от"
+            value={yearFrom}
+            onChange={(e) => setYearFrom(e.target.value)}
+            className="w-24 px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <span className="text-gray-500">-</span>
+          <input
+            type="number"
+            placeholder="Год до"
+            value={yearTo}
+            onChange={(e) => setYearTo(e.target.value)}
+            className="w-24 px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
       </div>

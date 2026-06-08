@@ -26,6 +26,7 @@ export default function Dialogs() {
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedDialog, setExpandedDialog] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>("");
+  const [feedbackFilter, setFeedbackFilter] = useState<"all" | "positive" | "negative" | "unrated">("all");
 
   useEffect(() => {
     const fetchDialogs = async () => {
@@ -64,7 +65,16 @@ export default function Dialogs() {
       matchesDate = dialog.date.includes(formattedDate);
     }
     
-    return matchesSearch && matchesDate;
+    let matchesFeedback = true;
+    if (feedbackFilter !== "all") {
+      const hasPositive = dialog.messages.some(m => m.feedback === "like");
+      const hasNegative = dialog.messages.some(m => m.feedback === "dislike");
+      if (feedbackFilter === "positive") matchesFeedback = hasPositive;
+      else if (feedbackFilter === "negative") matchesFeedback = hasNegative;
+      else if (feedbackFilter === "unrated") matchesFeedback = !hasPositive && !hasNegative;
+    }
+    
+    return matchesSearch && matchesDate && matchesFeedback;
   });
 
   const handleExport = () => {
@@ -146,6 +156,19 @@ export default function Dialogs() {
             onChange={(e) => setSelectedDate(e.target.value)}
             className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
+        </div>
+        <div className="relative">
+          <select
+            value={feedbackFilter}
+            onChange={(e) => setFeedbackFilter(e.target.value as any)}
+            className="pl-4 pr-10 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
+          >
+            <option value="all">Все отзывы</option>
+            <option value="positive">Положительные (Лайки)</option>
+            <option value="negative">Отрицательные (Дизлайки)</option>
+            <option value="unrated">Без оценки</option>
+          </select>
+          <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
         </div>
       </div>
 
