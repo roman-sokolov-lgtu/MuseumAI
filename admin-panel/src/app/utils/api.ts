@@ -13,8 +13,15 @@ export async function authFetch(url: string, options: RequestInit = {}) {
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  return fetch(url, {
+  const response = await fetch(url, {
     ...options,
     headers,
   });
+
+  if (response.status === 401 && window.location.pathname !== "/login") {
+    localStorage.removeItem("admin_panel_auth");
+    window.location.href = "/login";
+  }
+
+  return response;
 }
