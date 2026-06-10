@@ -74,10 +74,11 @@ export default function Exhibits() {
     
     let matchesCentury = true;
     if (centuryFilter) {
-      if (centuryFilter === "18") matchesCentury = exhibit.period.includes("18") || years.some(y => y >= 1700 && y <= 1799);
-      if (centuryFilter === "19") matchesCentury = exhibit.period.includes("19") || years.some(y => y >= 1800 && y <= 1899);
-      if (centuryFilter === "20") matchesCentury = exhibit.period.includes("20") || years.some(y => y >= 1900 && y <= 1999);
-      if (centuryFilter === "21") matchesCentury = exhibit.period.includes("21") || years.some(y => y >= 2000 && y <= 2099);
+      const p = exhibit.period.toLowerCase();
+      if (centuryFilter === "18") matchesCentury = p.includes("18 век") || p.includes("xviii") || years.some(y => y >= 1700 && y <= 1799);
+      if (centuryFilter === "19") matchesCentury = p.includes("19 век") || p.includes("xix") || years.some(y => y >= 1800 && y <= 1899);
+      if (centuryFilter === "20") matchesCentury = p.includes("20 век") || p.includes("xx век") || p.includes("xx в") || years.some(y => y >= 1900 && y <= 1999);
+      if (centuryFilter === "21") matchesCentury = p.includes("21 век") || p.includes("xxi") || years.some(y => y >= 2000 && y <= 2099);
     }
 
     let matchesYears = true;
