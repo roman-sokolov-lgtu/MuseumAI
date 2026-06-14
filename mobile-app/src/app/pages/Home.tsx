@@ -86,10 +86,7 @@ export function Home() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="max-w-md mx-auto w-full px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
-        <p>© 2026 Музейный Ассистент</p>
-      </footer>
+
     </div>
   );
 }

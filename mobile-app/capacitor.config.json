@@ -1,6 +1,6 @@
 {
-  "appId": "org.museum.ai",
-  "appName": "MuseumApp",
+  "appId": "org.museum.ai.pc",
+  "appName": "Музей ИИ (ПК)",
   "webDir": "dist",
   "plugins": {
     "CapacitorHttp": {

@@ -4,7 +4,7 @@ android {
     namespace = "org.museum.ai"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "org.museum.ai"
+        applicationId "org.museum.ai.pc"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

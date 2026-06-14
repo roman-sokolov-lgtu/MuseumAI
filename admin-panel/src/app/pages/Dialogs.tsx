@@ -86,7 +86,9 @@ export default function Dialogs() {
     filteredDialogs.forEach((dialog) => {
       dialog.messages.forEach((msg) => {
 
-        const escapedContent = `"${msg.content.replace(/"/g, '""')}"`;
+        // Заменяем переносы строк на пробелы, чтобы CSV не ломался в обычных редакторах
+        const cleanContent = msg.content.replace(/\r?\n|\r/g, ' ');
+        const escapedContent = `"${cleanContent.replace(/"/g, '""')}"`;
         rows.push([
           dialog.sessionId,
           dialog.date,
