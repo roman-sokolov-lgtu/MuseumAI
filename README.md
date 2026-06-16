@@ -46,6 +46,6 @@ docker-compose up -d --build
 `mobile-app\android\app\build\outputs\apk\debug\app-debug.apk`
 
 ## 🔐 Доступы по умолчанию
-* **Панель администратора**: `http://localhost:3000` (Логин: `admin`, Пароль: `admin`)
+* **Панель администратора**: `http://localhost:3000` (Логин: `admin`, Пароль: `password123`)
 * **Swagger (API документация)**: `http://localhost:8000/docs`
 * **База данных (Adminer)**: `http://localhost:8080` (Пользователь: `user`, Пароль: `secure_museum_password_2026`, БД: `museum`)

@@ -60,13 +60,15 @@ export function ChatSession() {
             setMessages([welcomeMessage]);
             setChatHistory([{ role: "assistant", content: aiWelcome }]);
           } catch (err) {
+            const fallbackContent = `Здравствуйте! Я ваш виртуальный ассистент. Вы находитесь у экспоната "${data.name}". О чем бы вы хотели узнать?`;
             const fallbackMessage: Message = {
               id: "welcome",
               type: "assistant",
-              content: `Здравствуйте! Я ваш виртуальный ассистент. Вы находитесь у экспоната "${data.name}". О чем бы вы хотели узнать?`,
+              content: fallbackContent,
               timestamp: new Date(),
             };
             setMessages([fallbackMessage]);
+            setChatHistory([{ role: "assistant", content: fallbackContent }]);
           }
         } else {
           setApiError(`Экспонат "${exhibitId}" не найден в базе данных.`);

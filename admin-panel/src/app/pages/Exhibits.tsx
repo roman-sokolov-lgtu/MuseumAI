@@ -22,6 +22,7 @@ export default function Exhibits() {
   const [exhibits, setExhibits] = useState<Exhibit[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [centuryFilter, setCenturyFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
   const [yearFrom, setYearFrom] = useState("");
   const [yearTo, setYearTo] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -63,6 +64,8 @@ export default function Exhibits() {
     return matches.map(Number);
   };
 
+  const uniqueCategories = Array.from(new Set(exhibits.map(e => e.category).filter(Boolean)));
+
   const filteredExhibits = exhibits.filter((exhibit) => {
     const matchesSearch = 
       exhibit.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -92,7 +95,9 @@ export default function Exhibits() {
       }
     }
 
-    return matchesSearch && matchesCentury && matchesYears;
+    const matchesCategory = !categoryFilter || exhibit.category === categoryFilter;
+
+    return matchesSearch && matchesCentury && matchesYears && matchesCategory;
   });
 
   const handleAdd = () => {
@@ -194,6 +199,20 @@ export default function Exhibits() {
             <option value="19">XIX век (1800-е)</option>
             <option value="20">XX век (1900-е)</option>
             <option value="21">XXI век (2000-е)</option>
+          </select>
+          <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+        </div>
+
+        <div className="relative min-w-[180px]">
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="w-full pl-4 pr-10 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
+          >
+            <option value="">Любая категория</option>
+            {uniqueCategories.map(cat => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
           </select>
           <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
         </div>

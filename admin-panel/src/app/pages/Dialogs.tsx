@@ -35,13 +35,18 @@ export default function Dialogs() {
         if (response.ok) {
           const data = await response.json();
 
-          const formattedData = data.map((d: any) => ({
-            ...d,
-            messages: d.messages.map((m: any) => ({
-              ...m,
-              timestamp: new Date(m.timestamp).toLocaleTimeString('ru-RU', {hour: '2-digit', minute:'2-digit'})
-            }))
-          }));
+          const formattedData = data.map((d: any) => {
+            const dDate = new Date(d.date);
+            const dateStr = dDate.toLocaleDateString('ru-RU') + ' ' + dDate.toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'});
+            return {
+              ...d,
+              date: dateStr,
+              messages: d.messages.map((m: any) => ({
+                ...m,
+                timestamp: new Date(m.timestamp).toLocaleTimeString('ru-RU', {hour: '2-digit', minute:'2-digit'})
+              }))
+            };
+          });
           setDialogs(formattedData);
         }
       } catch (error) {

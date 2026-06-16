@@ -54,7 +54,10 @@ export default function ChangePasswordDialog({
       const res = await authFetch("/api/admin/change-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ new_password: newPassword }),
+        body: JSON.stringify({ 
+          current_password: currentPassword,
+          new_password: newPassword 
+        }),
       });
       if (!res.ok) {
         throw new Error("Ошибка сервера");

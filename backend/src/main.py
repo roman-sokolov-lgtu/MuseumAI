@@ -107,6 +107,7 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
 
 
 class ChangePasswordRequest(schemas.BaseModel):
+    current_password: str
     new_password: str
 
 @app.post("/api/admin/change-password")
@@ -115,6 +116,8 @@ def change_password(
     db: Session = Depends(database.get_db),
     current_admin: models.Admin = Depends(get_current_admin)
 ):
+    if not verify_password(request.current_password, current_admin.admin_password):
+        raise HTTPException(status_code=400, detail="Incorrect current password")
     current_admin.admin_password = get_password_hash(request.new_password)
     db.commit()
     return {"message": "Password updated successfully"}
@@ -260,7 +263,7 @@ async def ask_assistant(request: AskRequest, db: Session = Depends(database.get_
         db_session = db.query(models.Session).filter(models.Session.session_id == request.session_id).first()
     
     if not db_session:
-        db_session = models.Session(exhibit_id=exhibit.exhibit_id if exhibit else None)
+        db_session = models.Session(exhibit_id=exhibit.exhibit_id)
         db.add(db_session)
         db.commit()
         db.refresh(db_session)
@@ -270,7 +273,7 @@ async def ask_assistant(request: AskRequest, db: Session = Depends(database.get_
     db.add(db_query)
     
     db_session.session_total_questions = (db_session.session_total_questions or 0) + 1
-    db_session.session_over = datetime.datetime.now(datetime.timezone.utc)
+    db_session.session_over = datetime.datetime.utcnow()
     db.commit()
     db.refresh(db_query)
 
@@ -423,7 +426,7 @@ def get_dialogs(db: Session = Depends(database.get_db), current_admin: models.Ad
             "id": str(s.session_id),
             "sessionId": f"SES-{s.session_start.strftime('%Y%m%d')}-{s.session_id:03d}",
             "exhibitName": s.exhibit.exhibit_name if s.exhibit else "Неизвестный экспонат",
-            "date": (s.session_start + datetime.timedelta(hours=3)).strftime('%d.%m.%Y %H:%M'),
+            "date": s.session_start.isoformat() + "Z",
             "duration": duration_str,
             "messagesCount": len(messages),
             "messages": messages
@@ -437,12 +440,12 @@ def get_dashboard_stats(db: Session = Depends(database.get_db), current_admin: m
     total_sessions = db.query(models.Session).count()
     total_questions = db.query(models.Query).count()
     
-    five_mins_ago = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(minutes=5)
+    five_mins_ago = datetime.datetime.utcnow() - datetime.timedelta(minutes=5)
     active_sessions = db.query(models.Session).filter(models.Session.session_over >= five_mins_ago).count()
     
     total_exhibits = db.query(models.Exhibit).count()
     
-    seven_days_ago = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=7)
+    seven_days_ago = datetime.datetime.utcnow() - datetime.timedelta(days=7)
     sessions_by_date = db.query(
         func.date(models.Session.session_start).label('date'),
         func.count(models.Session.session_id).label('count')

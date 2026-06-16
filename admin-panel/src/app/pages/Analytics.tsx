@@ -32,7 +32,7 @@ import { Button } from "../components/ui/button";
 export default function Analytics() {
   const [data, setData] = useState<any>(null);
   const [dashboardData, setDashboardData] = useState<any>(null);
-  const [healthStatus, setHealthStatus] = useState({ database: "..." });
+  const [healthStatus, setHealthStatus] = useState({ database: "...", ollama: "..." });
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -58,10 +58,10 @@ export default function Analytics() {
         const response = await authFetch("/api/health");
         if (response.ok) {
           const result = await response.json();
-          setHealthStatus({ database: result.database });
+          setHealthStatus({ database: result.database, ollama: result.ollama });
         }
       } catch (e) {
-        setHealthStatus({ database: "error" });
+        setHealthStatus({ database: "error", ollama: "error" });
       }
     };
 
@@ -283,13 +283,24 @@ export default function Analytics() {
       
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Статус системы</h2>
-        <div className="flex items-center gap-3">
-          <div className={`w-3 h-3 rounded-full ${healthStatus.database === "ok" ? "bg-green-500" : "bg-red-500"}`} />
-          <div>
-            <p className="text-sm text-gray-600 dark:text-gray-400">База данных</p>
-            <p className="font-medium text-gray-900 dark:text-white">
-              {healthStatus.database === "ok" ? "Подключена" : healthStatus.database === "..." ? "Проверка..." : "Ошибка"}
-            </p>
+        <div className="flex flex-wrap gap-8">
+          <div className="flex items-center gap-3">
+            <div className={`w-3 h-3 rounded-full ${healthStatus.database === "ok" ? "bg-green-500" : "bg-red-500"}`} />
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">База данных</p>
+              <p className="font-medium text-gray-900 dark:text-white">
+                {healthStatus.database === "ok" ? "Подключена" : healthStatus.database === "..." ? "Проверка..." : "Ошибка"}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className={`w-3 h-3 rounded-full ${healthStatus.ollama === "ok" ? "bg-green-500" : "bg-red-500"}`} />
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Нейросеть (Ollama)</p>
+              <p className="font-medium text-gray-900 dark:text-white">
+                {healthStatus.ollama === "ok" ? "Запущена" : healthStatus.ollama === "..." ? "Проверка..." : "Недоступна"}
+              </p>
+            </div>
           </div>
         </div>
       </div>

@@ -3,7 +3,6 @@ export interface Exhibit {
   name: string;
   description: string;
   period: string;
-  imageUrl?: string;
 }
 
 export interface Message {
