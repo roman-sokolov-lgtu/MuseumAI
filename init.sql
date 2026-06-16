@@ -2,8 +2,6 @@
 -- PostgreSQL database dump
 --
 
-\restrict vJ7fEGGIcghg3eN4eI8HVMccODbW8UBc2RdMXUVnFGh61eJ6cd5w1ipIJ8bQpwz
-
 -- Dumped from database version 15.17 (Debian 15.17-1.pgdg13+1)
 -- Dumped by pg_dump version 15.17 (Debian 15.17-1.pgdg13+1)
 
@@ -429,6 +427,4 @@ ALTER TABLE ONLY public.session
 --
 -- PostgreSQL database dump complete
 --
-
-\unrestrict vJ7fEGGIcghg3eN4eI8HVMccODbW8UBc2RdMXUVnFGh61eJ6cd5w1ipIJ8bQpwz
 

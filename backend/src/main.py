@@ -1,10 +1,10 @@
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload, selectinload
 from . import models, database, schemas
 from typing import List
 import httpx
-from sqlalchemy import text, func, Column, Integer, String, Text, DateTime, ForeignKey, Time
+from sqlalchemy import text, func
 import os
 from dotenv import load_dotenv
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -18,6 +18,8 @@ load_dotenv()
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "fallback_secret_key")
 ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "1440"))
+OLLAMA_URL = os.getenv("OLLAMA_URL", "http://host.docker.internal:11434")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "gemma2:9b")
 
 import bcrypt
 
@@ -139,10 +141,11 @@ async def check_health(db: Session = Depends(database.get_db)):
         
     try:
         async with httpx.AsyncClient(timeout=2) as client:
-            resp = await client.get("http://host.docker.internal:11434/api/tags")
+            resp = await client.get(f"{OLLAMA_URL}/api/tags")
         if resp.status_code != 200:
             status["ollama"] = "error"
-    except Exception:
+    except Exception as e:
+        print(f"Health check: Ollama connection failed: {e}")
         status["ollama"] = "error"
         
     return status
@@ -179,9 +182,9 @@ async def get_welcome(request: WelcomeRequest, db: Session = Depends(database.ge
     try:
         async with httpx.AsyncClient(timeout=300.0) as client:
             response = await client.post(
-                "http://host.docker.internal:11434/api/chat",
+                f"{OLLAMA_URL}/api/chat",
                 json={
-                    "model": "gemma2:9b",
+                    "model": OLLAMA_MODEL,
                     "messages": [
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": "Поприветствуй посетителя."}
@@ -193,6 +196,7 @@ async def get_welcome(request: WelcomeRequest, db: Session = Depends(database.ge
             response.raise_for_status()
             answer = response.json()["message"]["content"]
     except Exception as e:
+        print(f"Error in get_welcome: {e}")
         answer = "Приносим извинения, виртуальный гид сейчас обрабатывает слишком много запросов. Пожалуйста, повторите ваш вопрос через пару секунд или ознакомьтесь с базовой справкой об экспонате."
     
     return {"answer": answer}
@@ -301,9 +305,9 @@ async def ask_assistant(request: AskRequest, db: Session = Depends(database.get_
     try:
         async with httpx.AsyncClient(timeout=300.0) as client:
             response = await client.post(
-                "http://host.docker.internal:11434/api/chat",
+                f"{OLLAMA_URL}/api/chat",
                 json={
-                    "model": "gemma2:9b", 
+                    "model": OLLAMA_MODEL, 
                     "messages": messages, 
                     "stream": False,
                     "options": {"temperature": 0.0}
@@ -312,6 +316,7 @@ async def ask_assistant(request: AskRequest, db: Session = Depends(database.get_
             response.raise_for_status()
             answer = response.json()["message"]["content"]
     except Exception as e:
+        print(f"Error in ask_assistant: {e}")
         answer = "Приносим извинения, виртуальный гид сейчас обрабатывает слишком много запросов. Пожалуйста, повторите ваш вопрос через пару секунд или ознакомьтесь с базовой справкой об экспонате."
 
     response_time_secs = time.time() - start_time
@@ -340,7 +345,7 @@ def submit_feedback(answer_id: int, request: schemas.FeedbackRequest, db: Sessio
 
 @app.get("/api/exhibits", response_model=List[schemas.ExhibitResponse])
 def get_exhibits(skip: int = 0, limit: int = 100, db: Session = Depends(database.get_db), current_admin: models.Admin = Depends(get_current_admin)):
-    exhibits = db.query(models.Exhibit).offset(skip).limit(limit).all()
+    exhibits = db.query(models.Exhibit).options(joinedload(models.Exhibit.admin)).offset(skip).limit(limit).all()
     return exhibits
 
 @app.get("/api/exhibits/qr/{qr_code}", response_model=schemas.ExhibitResponse)
@@ -404,7 +409,10 @@ def delete_exhibit(exhibit_id: int, db: Session = Depends(database.get_db), curr
 
 @app.get("/api/dialogs", response_model=List[schemas.DialogResponse])
 def get_dialogs(db: Session = Depends(database.get_db), current_admin: models.Admin = Depends(get_current_admin)):
-    sessions = db.query(models.Session).order_by(models.Session.session_start.desc()).all()
+    sessions = db.query(models.Session).options(
+        joinedload(models.Session.exhibit),
+        selectinload(models.Session.queries).selectinload(models.Query.answers)
+    ).order_by(models.Session.session_start.desc()).all()
     dialogs = []
     
     for s in sessions:
