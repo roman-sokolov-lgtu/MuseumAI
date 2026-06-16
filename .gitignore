@@ -18,3 +18,5 @@ admin-panel/node_modules/
 mobile-app/node_modules/
 mobile-app/android/app/build/
 mobile-app/android/.gradle/
+
+app-pc.apk

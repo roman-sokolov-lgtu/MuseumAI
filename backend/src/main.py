@@ -122,8 +122,8 @@ async def check_health(db: Session = Depends(database.get_db)):
         status["database"] = "error"
         
     try:
-        import requests
-        resp = requests.get("http://host.docker.internal:11434/api/tags", timeout=2)
+        async with httpx.AsyncClient(timeout=2) as client:
+            resp = await client.get("http://host.docker.internal:11434/api/tags")
         if resp.status_code != 200:
             status["ollama"] = "error"
     except Exception:
@@ -193,6 +193,8 @@ async def ask_assistant(request: AskRequest, db: Session = Depends(database.get_
         exhibit = db.query(models.Exhibit).filter(
             models.Exhibit.exhibit_qr == request.exhibit_qr
         ).first()
+        if not exhibit:
+            raise HTTPException(status_code=404, detail="Exhibit not found")
 
     exhibit_context = ""
     if exhibit:
@@ -439,17 +441,16 @@ def get_dashboard_stats(db: Session = Depends(database.get_db), current_admin: m
     date_map = {}
     for r in sessions_by_date:
         d_str = r.date.strftime('%d.%m') if isinstance(r.date, datetime.date) else str(r.date)
-        date_map[d_str] = {"date": d_str, "sessions": r.count, "questions": 0}
+        date_map[r.date] = {"date": d_str, "sessions": r.count, "questions": 0}
         
     for r in questions_by_date:
         d_str = r.date.strftime('%d.%m') if isinstance(r.date, datetime.date) else str(r.date)
-        if d_str in date_map:
-            date_map[d_str]["questions"] = r.count
+        if r.date in date_map:
+            date_map[r.date]["questions"] = r.count
         else:
-            date_map[d_str] = {"date": d_str, "sessions": 0, "questions": r.count}
+            date_map[r.date] = {"date": d_str, "sessions": 0, "questions": r.count}
             
-    session_data = list(date_map.values())
-    session_data.sort(key=lambda x: x["date"])
+    session_data = [date_map[k] for k in sorted(date_map.keys())]
     
     popular = db.query(
         models.Exhibit.exhibit_name,

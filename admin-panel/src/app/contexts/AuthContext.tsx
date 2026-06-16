@@ -17,7 +17,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 const AUTH_KEY = "admin_panel_auth";
 
-function loadStoredAuth(): { user: User } | null {
+function loadStoredAuth(): { user: User; token: string } | null {
   try {
     const raw = localStorage.getItem(AUTH_KEY);
     if (!raw) return null;

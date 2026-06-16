@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { authFetch } from "../utils/api";
 import {
   Dialog,
   DialogContent,
@@ -37,7 +38,7 @@ export default function ChangePasswordDialog({
     onOpenChange(next);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     if (!newPassword || newPassword.length < 6) {
@@ -48,8 +49,21 @@ export default function ChangePasswordDialog({
       setError("Пароли не совпадают");
       return;
     }
-    resetForm();
-    onOpenChange(false);
+    
+    try {
+      const res = await authFetch("/admin/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ new_password: newPassword }),
+      });
+      if (!res.ok) {
+        throw new Error("Ошибка сервера");
+      }
+      resetForm();
+      onOpenChange(false);
+    } catch (err) {
+      setError("Не удалось сменить пароль");
+    }
   };
 
   return (
