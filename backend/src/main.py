@@ -106,6 +106,19 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
     return {"access_token": access_token, "token_type": "bearer"}
 
 
+class ChangePasswordRequest(schemas.BaseModel):
+    new_password: str
+
+@app.post("/api/admin/change-password")
+def change_password(
+    request: ChangePasswordRequest,
+    db: Session = Depends(database.get_db),
+    current_admin: models.Admin = Depends(get_current_admin)
+):
+    current_admin.admin_password = get_password_hash(request.new_password)
+    db.commit()
+    return {"message": "Password updated successfully"}
+
 
 class AskRequest(schemas.BaseModel):
     query: str
@@ -186,6 +199,8 @@ async def ask_assistant(request: AskRequest, db: Session = Depends(database.get_
     exhibit = None
     db_session = None
 
+    if not request.exhibit_qr:
+        raise HTTPException(status_code=400, detail="exhibit_qr is required")
 
     is_first_message = not request.history or len(request.history) == 0
 

@@ -51,7 +51,7 @@ export default function ChangePasswordDialog({
     }
     
     try {
-      const res = await authFetch("/admin/change-password", {
+      const res = await authFetch("/api/admin/change-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ new_password: newPassword }),
