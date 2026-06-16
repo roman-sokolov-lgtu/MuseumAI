@@ -26,7 +26,7 @@ SET default_table_access_method = heap;
 
 CREATE TABLE public.admin (
     admin_id integer NOT NULL,
-    admin_login character varying(50) NOT NULL,
+    admin_login character varying(50) NOT NULL UNIQUE,
     admin_password character varying(100) NOT NULL,
     admin_email character varying(100) NOT NULL UNIQUE
 );

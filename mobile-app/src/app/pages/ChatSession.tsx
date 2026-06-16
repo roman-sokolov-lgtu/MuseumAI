@@ -159,9 +159,14 @@ export function ChatSession() {
         return;
       }
       
-      const permission = await SpeechRecognition.checkPermissions();
+      let permission = await SpeechRecognition.checkPermissions();
       if (permission.speechRecognition !== 'granted') {
-        await SpeechRecognition.requestPermissions();
+        permission = await SpeechRecognition.requestPermissions();
+      }
+
+      if (permission.speechRecognition !== 'granted') {
+        alert("Доступ к микрофону отклонен. Пожалуйста, разрешите доступ в настройках устройства для использования голосового ввода.");
+        return;
       }
 
       setIsRecording(true);

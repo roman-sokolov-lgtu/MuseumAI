@@ -247,7 +247,7 @@ export default function Analytics() {
                 outerRadius={80}
                 dataKey="value"
               >
-                {pieData.map((entry, index) => (
+                {pieData.filter((e) => e.value > 0).map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>

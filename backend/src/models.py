@@ -3,6 +3,9 @@ from sqlalchemy.orm import relationship
 from .database import Base
 import datetime
 
+def get_utc_now():
+    return datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+
 class Admin(Base):
     __tablename__ = "admin"
     admin_id = Column(Integer, primary_key=True, index=True)
@@ -33,7 +36,7 @@ class Session(Base):
     __tablename__ = "session"
     session_id = Column(Integer, primary_key=True, index=True)
     session_total_questions = Column(Integer, default=0, nullable=False)
-    session_start = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
+    session_start = Column(DateTime, default=get_utc_now, nullable=False)
     session_over = Column(DateTime, nullable=True)
     exhibit_id = Column(Integer, ForeignKey("exhibit.exhibit_id"), nullable=False)
     
@@ -44,7 +47,7 @@ class Query(Base):
     __tablename__ = "query"
     query_id = Column(Integer, primary_key=True, index=True)
     query_text = Column(Text, nullable=False)
-    query_created = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
+    query_created = Column(DateTime, default=get_utc_now, nullable=False)
     session_id = Column(Integer, ForeignKey("session.session_id"), nullable=False)
     
     session = relationship("Session", back_populates="queries")
@@ -54,7 +57,7 @@ class Answer(Base):
     __tablename__ = "answer"
     answer_id = Column(Integer, primary_key=True, index=True)
     answer_text = Column(Text, nullable=False)
-    answer_date = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
+    answer_date = Column(DateTime, default=get_utc_now, nullable=False)
     answer_response_time = Column(Integer, nullable=False)
     answer_feedback = Column(String(10), nullable=True)
     query_id = Column(Integer, ForeignKey("query.query_id"), nullable=False)

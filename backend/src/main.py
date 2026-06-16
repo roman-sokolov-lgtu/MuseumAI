@@ -21,6 +21,10 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://host.docker.internal:11434")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "gemma2:9b")
 
+def get_utc_now():
+    return datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+
+
 import bcrypt
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/login")
@@ -285,7 +289,7 @@ async def ask_assistant(request: AskRequest, db: Session = Depends(database.get_
     db.add(db_query)
     
     db_session.session_total_questions = (db_session.session_total_questions or 0) + 1
-    db_session.session_over = datetime.datetime.utcnow()
+    db_session.session_over = get_utc_now()
     db.commit()
     db.refresh(db_query)
 
@@ -456,12 +460,12 @@ def get_dashboard_stats(db: Session = Depends(database.get_db), current_admin: m
     total_sessions = db.query(models.Session).count()
     total_questions = db.query(models.Query).count()
     
-    five_mins_ago = datetime.datetime.utcnow() - datetime.timedelta(minutes=5)
+    five_mins_ago = get_utc_now() - datetime.timedelta(minutes=5)
     active_sessions = db.query(models.Session).filter(models.Session.session_over >= five_mins_ago).count()
     
     total_exhibits = db.query(models.Exhibit).count()
     
-    seven_days_ago = datetime.datetime.utcnow() - datetime.timedelta(days=7)
+    seven_days_ago = get_utc_now() - datetime.timedelta(days=7)
     sessions_by_date = db.query(
         func.date(models.Session.session_start).label('date'),
         func.count(models.Session.session_id).label('count')
