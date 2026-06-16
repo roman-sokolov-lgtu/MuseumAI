@@ -30,7 +30,7 @@ CREATE TABLE public.admin (
     admin_id integer NOT NULL,
     admin_login character varying(50) NOT NULL,
     admin_password character varying(100) NOT NULL,
-    admin_email character varying(100) NOT NULL
+    admin_email character varying(100) NOT NULL UNIQUE
 );
 
 
@@ -66,7 +66,7 @@ CREATE TABLE public.answer (
     answer_id integer NOT NULL,
     answer_text text NOT NULL,
     answer_date timestamp without time zone NOT NULL,
-    answer_response_time time without time zone NOT NULL,
+    answer_response_time integer NOT NULL,
     answer_feedback character varying(10),
     query_id integer NOT NULL
 );

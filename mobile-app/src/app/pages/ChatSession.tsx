@@ -5,7 +5,6 @@ import {
   Mic, 
   Send, 
   Volume2, 
-  History,
   Moon,
   Sun,
   ThumbsUp,
@@ -105,16 +104,6 @@ export function ChatSession() {
   }, [messages]);
 
 
-  const generateResponse = (question: string): string => {
-
-    const fallbacks = [
-      `Это интересный вопрос о произведении "${exhibit?.name}".`,
-      `Благодарю за вопрос! Относительно "${exhibit?.name}" - это уникальное произведение.`,
-      `Позвольте рассказать вам больше об этом. Если у вас есть более конкретные вопросы, я с радостью на них отвечу!`,
-    ];
-
-    return fallbacks[Math.floor(Math.random() * fallbacks.length)];
-  };
 
   const handleSendMessage = async () => {
     const textToSend = inputText;
@@ -270,7 +259,7 @@ export function ChatSession() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
-      {/* Header */}
+      
       <header className="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
@@ -305,7 +294,7 @@ export function ChatSession() {
         </div>
       </header>
 
-      {/* Exhibit Info Card */}
+      
       <div className="bg-white dark:bg-gray-800 border-b dark:border-gray-700">
         <div className="max-w-4xl mx-auto px-4 py-3">
           <p className="text-xs text-blue-600 dark:text-blue-400 font-medium uppercase tracking-wide mb-0.5">
@@ -325,7 +314,7 @@ export function ChatSession() {
 
 
 
-      {/* Messages */}
+      
       <main className="flex-1 overflow-y-auto">
         <div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
           {messages.map((message) => (
@@ -401,7 +390,7 @@ export function ChatSession() {
         </div>
       </main>
 
-      {/* Input Area */}
+      
       <div className="bg-white dark:bg-gray-800 border-t dark:border-gray-700 shadow-lg">
         <div className="max-w-4xl mx-auto px-4 py-4">
           {isRecording && (
@@ -445,7 +434,7 @@ export function ChatSession() {
                 type="text"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                 placeholder="Задайте вопрос..."
                 className="flex-1 px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500"
               />

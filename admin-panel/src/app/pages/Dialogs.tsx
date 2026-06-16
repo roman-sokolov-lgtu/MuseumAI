@@ -85,8 +85,6 @@ export default function Dialogs() {
 
     filteredDialogs.forEach((dialog) => {
       dialog.messages.forEach((msg) => {
-
-        // Заменяем переносы строк на пробелы, чтобы CSV не ломался в обычных редакторах
         const cleanContent = msg.content.replace(/\r?\n|\r/g, ' ');
         const escapedContent = `"${cleanContent.replace(/"/g, '""')}"`;
         rows.push([
@@ -119,7 +117,7 @@ export default function Dialogs() {
 
   return (
     <div className="p-8 bg-gray-50 dark:bg-gray-900 min-h-full">
-      {/* Header */}
+      
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
@@ -138,7 +136,7 @@ export default function Dialogs() {
         </Button>
       </div>
 
-      {/* Filters */}
+      
       <div className="flex gap-4 mb-6">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -174,14 +172,14 @@ export default function Dialogs() {
         </div>
       </div>
 
-      {/* Dialogs List */}
+      
       <div className="space-y-4">
         {filteredDialogs.map((dialog) => (
           <div
             key={dialog.id}
             className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
           >
-            {/* Dialog Header */}
+            
             <div
               onClick={() => toggleDialog(dialog.id)}
               className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
@@ -210,7 +208,7 @@ export default function Dialogs() {
               )}
             </div>
 
-            {/* Dialog Messages */}
+            
             {expandedDialog === dialog.id && (
               <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-900">
                 <div className="space-y-4">

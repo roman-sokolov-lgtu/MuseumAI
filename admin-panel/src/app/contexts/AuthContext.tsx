@@ -9,7 +9,6 @@ type AuthContextType = {
   isLoggedIn: boolean;
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
-  register: (name: string, email: string, password: string) => boolean;
   logout: () => void;
   getToken: () => string | null;
 };
@@ -71,10 +70,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const register = useCallback((name: string, email: string, _password: string) => {
-    return false;
-  }, []);
-
   const logout = useCallback(() => {
     clearAuth();
     setState({ user: null });
@@ -89,7 +84,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoggedIn: !!state.user,
     user: state.user,
     login,
-    register,
     logout,
     getToken,
   };

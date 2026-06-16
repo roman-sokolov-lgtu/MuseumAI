@@ -8,7 +8,7 @@ export function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800 flex flex-col">
-      {/* Header */}
+      
       <header className="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700">
         <div className="max-w-md mx-auto px-6 py-4 flex items-center justify-between">
           <h1 className="text-center text-xl font-semibold text-gray-800 dark:text-gray-100">
@@ -26,7 +26,7 @@ export function Home() {
         </div>
       </header>
 
-      {/* Main Content */}
+      
       <main className="flex-1 max-w-md mx-auto w-full px-6 py-8">
         <div className="mb-8 text-center">
           <div className="w-20 h-20 mx-auto mb-4 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
@@ -40,7 +40,7 @@ export function Home() {
           </p>
         </div>
 
-        {/* Main CTA Button */}
+        
         <button
           onClick={() => navigate("/scanner")}
           className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 px-6 rounded-xl shadow-lg transition-colors mb-4 flex items-center justify-center gap-3"
@@ -49,7 +49,7 @@ export function Home() {
           <span className="text-lg font-medium">Сканировать QR-код</span>
         </button>
 
-        {/* Info Cards */}
+        
         <div className="space-y-3 mt-8">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-100 dark:border-gray-700">
             <div className="flex items-start gap-3">

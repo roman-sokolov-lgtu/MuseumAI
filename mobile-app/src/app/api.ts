@@ -8,7 +8,6 @@ export const getWelcome = async (qrCode: string): Promise<string> => {
     method: "POST",
     headers: { 
       "Content-Type": "application/json",
-      "ngrok-skip-browser-warning": "69420"
     },
     body: JSON.stringify({ exhibit_qr: qrCode }),
   });
@@ -18,9 +17,7 @@ export const getWelcome = async (qrCode: string): Promise<string> => {
 };
 
 export const getExhibitByQr = async (qrCode: string) => {
-  const response = await fetch(`${apiUrl()}/exhibits/qr/${qrCode}`, {
-    headers: { "ngrok-skip-browser-warning": "69420" }
-  });
+  const response = await fetch(`${apiUrl()}/exhibits/qr/${qrCode}`);
   if (!response.ok) {
     if (response.status === 404) return null;
     throw new Error("Failed to fetch exhibit");
@@ -53,7 +50,6 @@ export const sendMessage = async (
     method: "POST",
     headers: { 
       "Content-Type": "application/json",
-      "ngrok-skip-browser-warning": "69420"
     },
     body: JSON.stringify(body),
   });
@@ -70,7 +66,6 @@ export const submitFeedback = async (answerId: number, feedback: 'like' | 'disli
     method: "POST",
     headers: { 
       "Content-Type": "application/json",
-      "ngrok-skip-browser-warning": "69420"
     },
     body: JSON.stringify({ feedback }),
   });

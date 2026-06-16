@@ -1,7 +1,6 @@
 import { authFetch } from "../utils/api";
 import { Outlet, Link, useLocation, useNavigate } from "react-router";
 import {
-  LayoutDashboard,
   Frame,
   MessageSquare,
   BarChart3,
@@ -67,13 +66,13 @@ export default function Root() {
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Sidebar */}
+      
       <aside
         className={`${
           isSidebarOpen ? "w-64" : "w-20"
         } bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transition-all duration-300 flex flex-col`}
       >
-        {/* Header */}
+        
         <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-700">
           {isSidebarOpen && (
             <h1 className="font-semibold text-lg text-gray-900 dark:text-white">
@@ -92,7 +91,7 @@ export default function Root() {
           </button>
         </div>
 
-        {/* Navigation */}
+        
         <nav className="flex-1 p-4 space-y-2">
           {navigation.map((item) => {
             const Icon = item.icon;
@@ -116,7 +115,7 @@ export default function Root() {
           })}
         </nav>
 
-        {/* Footer: профиль и тема на одном уровне (при свёрнутой панели — друг над другом) */}
+        
         <div className="p-4 border-t border-gray-200 dark:border-gray-700">
           <div
             className={`flex w-full gap-2 ${
@@ -193,7 +192,7 @@ export default function Root() {
         </div>
       </aside>
 
-      {/* Main Content */}
+      
       <main className="flex-1 overflow-auto">
         <Outlet />
       </main>

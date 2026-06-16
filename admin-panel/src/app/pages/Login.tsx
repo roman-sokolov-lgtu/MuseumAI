@@ -85,8 +85,6 @@ export default function Login() {
             Войти
           </Button>
         </form>
-
-        {/* Регистрация отключена из соображений безопасности */}
       </div>
     </div>
   );

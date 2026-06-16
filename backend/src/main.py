@@ -4,13 +4,14 @@ from sqlalchemy.orm import Session
 from . import models, database, schemas
 from typing import List
 import httpx
-from sqlalchemy import text, func
+from sqlalchemy import text, func, Column, Integer, String, Text, DateTime, ForeignKey, Time
 import os
 from dotenv import load_dotenv
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 import datetime
 from datetime import timedelta
+import time
 
 load_dotenv()
 
@@ -34,9 +35,9 @@ def get_password_hash(password):
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.datetime.utcnow() + expires_delta
+        expire = datetime.datetime.now(datetime.timezone.utc) + expires_delta
     else:
-        expire = datetime.datetime.utcnow() + timedelta(minutes=15)
+        expire = datetime.datetime.now(datetime.timezone.utc) + timedelta(minutes=15)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
@@ -135,7 +136,6 @@ class WelcomeRequest(schemas.BaseModel):
 
 @app.post("/api/welcome")
 async def get_welcome(request: WelcomeRequest, db: Session = Depends(database.get_db)):
-    """Generate a welcome greeting for an exhibit WITHOUT saving anything to the DB."""
     exhibit = db.query(models.Exhibit).filter(
         models.Exhibit.exhibit_qr == request.exhibit_qr
     ).first()
@@ -177,7 +177,7 @@ async def get_welcome(request: WelcomeRequest, db: Session = Depends(database.ge
             response.raise_for_status()
             answer = response.json()["message"]["content"]
     except Exception as e:
-        answer = f"Техническая ошибка: ИИ недоступен. Подробности: {repr(e)}"
+        answer = "Приносим извинения, виртуальный гид сейчас обрабатывает слишком много запросов. Пожалуйста, повторите ваш вопрос через пару секунд или ознакомьтесь с базовой справкой об экспонате."
     
     return {"answer": answer}
 
@@ -253,8 +253,7 @@ async def ask_assistant(request: AskRequest, db: Session = Depends(database.get_
     db.add(db_query)
     
     db_session.session_total_questions = (db_session.session_total_questions or 0) + 1
-    import datetime
-    db_session.session_over = datetime.datetime.utcnow()
+    db_session.session_over = datetime.datetime.now(datetime.timezone.utc)
     db.commit()
     db.refresh(db_query)
 
@@ -270,7 +269,6 @@ async def ask_assistant(request: AskRequest, db: Session = Depends(database.get_
     )
     messages.append({"role": "user", "content": safe_query})
 
-    import time
     start_time = time.time()
     try:
         async with httpx.AsyncClient(timeout=300.0) as client:
@@ -285,26 +283,19 @@ async def ask_assistant(request: AskRequest, db: Session = Depends(database.get_
             )
             response.raise_for_status()
             answer = response.json()["message"]["content"]
-            
-            response_time_secs = time.time() - start_time
-            import datetime
-            response_time_obj = datetime.time(
-                hour=0,
-                minute=int(response_time_secs) // 60,
-                second=int(response_time_secs) % 60,
-                microsecond=int((response_time_secs % 1) * 1000000)
-            )
-            
-            db_answer = models.Answer(
-                answer_text=answer, 
-                query_id=db_query.query_id,
-                answer_response_time=response_time_obj
-            )
-            db.add(db_answer)
-            db.commit()
-            
     except Exception as e:
-        raise HTTPException(status_code=503, detail=f"Ollama недоступна: {str(e)}")
+        answer = "Приносим извинения, виртуальный гид сейчас обрабатывает слишком много запросов. Пожалуйста, повторите ваш вопрос через пару секунд или ознакомьтесь с базовой справкой об экспонате."
+
+    response_time_secs = time.time() - start_time
+    response_time_ms = int(response_time_secs * 1000)
+    
+    db_answer = models.Answer(
+        answer_text=answer, 
+        query_id=db_query.query_id,
+        answer_response_time=response_time_ms
+    )
+    db.add(db_answer)
+    db.commit()
 
     return {"answer": answer, "session_id": db_session.session_id, "answer_id": db_answer.answer_id}
 
@@ -425,18 +416,16 @@ def get_dialogs(db: Session = Depends(database.get_db), current_admin: models.Ad
 
 @app.get("/api/analytics/dashboard", response_model=schemas.DashboardResponse)
 def get_dashboard_stats(db: Session = Depends(database.get_db), current_admin: models.Admin = Depends(get_current_admin)):
-    from sqlalchemy import func
-    import datetime
     
     total_sessions = db.query(models.Session).count()
     total_questions = db.query(models.Query).count()
     
-    five_mins_ago = datetime.datetime.utcnow() - datetime.timedelta(minutes=5)
+    five_mins_ago = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(minutes=5)
     active_sessions = db.query(models.Session).filter(models.Session.session_over >= five_mins_ago).count()
     
     total_exhibits = db.query(models.Exhibit).count()
     
-    seven_days_ago = datetime.datetime.utcnow() - datetime.timedelta(days=7)
+    seven_days_ago = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=7)
     sessions_by_date = db.query(
         func.date(models.Session.session_start).label('date'),
         func.count(models.Session.session_id).label('count')
@@ -511,7 +500,6 @@ def get_dashboard_stats(db: Session = Depends(database.get_db), current_admin: m
 
 @app.get("/api/analytics/detailed")
 def get_detailed_analytics(db: Session = Depends(database.get_db), current_admin: models.Admin = Depends(get_current_admin)):
-    from sqlalchemy import func
     
     likes = db.query(models.Answer).filter(models.Answer.answer_feedback == 'like').count()
     dislikes = db.query(models.Answer).filter(models.Answer.answer_feedback == 'dislike').count()
@@ -524,14 +512,11 @@ def get_detailed_analytics(db: Session = Depends(database.get_db), current_admin
     answers_with_time = db.query(models.Answer).filter(models.Answer.answer_response_time.isnot(None)).all()
     avg_response_time = 0
     if answers_with_time:
-        total_seconds = sum([
-            t.answer_response_time.hour * 3600 + 
-            t.answer_response_time.minute * 60 + 
-            t.answer_response_time.second + 
-            t.answer_response_time.microsecond / 1000000 
+        total_ms = sum([
+            t.answer_response_time
             for t in answers_with_time
         ])
-        avg_response_time = round(total_seconds / len(answers_with_time), 2)
+        avg_response_time = round((total_ms / 1000) / len(answers_with_time), 2)
     
     return {
         "satisfaction_ratio": satisfaction_ratio,

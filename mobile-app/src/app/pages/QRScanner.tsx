@@ -6,7 +6,7 @@ import {
   BarcodeScanner,
   BarcodeFormat,
 } from "@capacitor-mlkit/barcode-scanning";
-import { setServerUrl } from "../api";
+
 
 export function QRScanner() {
   const navigate = useNavigate();
@@ -52,7 +52,7 @@ export function QRScanner() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col">
-      {/* Header */}
+      
       <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
           <h1 className="text-gray-900 dark:text-white font-semibold">Сканирование QR-кода</h1>
@@ -78,7 +78,7 @@ export function QRScanner() {
         </div>
       </header>
 
-      {/* Main area */}
+      
       <main className="flex-1 flex flex-col items-center justify-center px-6 gap-6">
         <div className="w-full max-w-sm flex flex-col items-center gap-6">
           <div className="w-48 h-48 rounded-3xl bg-gray-100 dark:bg-gray-800 border-4 border-blue-500 flex items-center justify-center">
@@ -103,7 +103,7 @@ export function QRScanner() {
             Код считается автоматически.
           </p>
 
-          {/* Error */}
+          
           {error && (
             <div className="bg-red-50 dark:bg-red-900/40 border border-red-300 dark:border-red-700 rounded-xl p-4 flex items-start gap-3 w-full">
               <AlertCircle className="w-5 h-5 text-red-500 dark:text-red-400 flex-shrink-0 mt-0.5" />

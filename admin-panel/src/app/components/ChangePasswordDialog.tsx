@@ -48,7 +48,6 @@ export default function ChangePasswordDialog({
       setError("Пароли не совпадают");
       return;
     }
-    // Пока без бэкенда — просто закрываем
     resetForm();
     onOpenChange(false);
   };

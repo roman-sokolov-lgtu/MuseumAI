@@ -88,7 +88,7 @@ export default function Exhibits() {
       if (years.length > 0) {
         matchesYears = years.some(y => y >= from && y <= to);
       } else {
-        matchesYears = false; // Cannot filter by precise year if no year is found in the period text
+        matchesYears = false;
       }
     }
 
@@ -158,7 +158,7 @@ export default function Exhibits() {
 
   return (
     <div className="p-8 bg-gray-50 dark:bg-gray-900 min-h-full">
-      {/* Header */}
+      
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Управление экспонатами</h1>
@@ -170,7 +170,7 @@ export default function Exhibits() {
         </Button>
       </div>
 
-      {/* Filters */}
+      
       <div className="flex flex-wrap gap-4 mb-6">
         <div className="relative max-w-md flex-1 min-w-[250px]">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -217,7 +217,7 @@ export default function Exhibits() {
         </div>
       </div>
 
-      {/* Exhibits Grid */}
+      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredExhibits.map((exhibit) => (
           <div
@@ -246,7 +246,7 @@ export default function Exhibits() {
                 </p>
               )}
 
-              {/* Actions */}
+              
               <div className="flex gap-2 pt-3 border-t border-gray-100 dark:border-gray-700">
                 <button
                   onClick={() => handleEdit(exhibit)}
@@ -289,7 +289,7 @@ export default function Exhibits() {
         onSave={handleSave}
       />
 
-      {/* Delete Confirmation */}
+      
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -305,7 +305,7 @@ export default function Exhibits() {
         </DialogContent>
       </Dialog>
 
-      {/* Print QR Dialog */}
+      
       <Dialog open={!!printQrExhibit} onOpenChange={() => setPrintQrExhibit(null)}>
         <DialogContent className="flex flex-col items-center justify-center py-10">
           <DialogHeader>

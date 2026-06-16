@@ -55,7 +55,7 @@ class Answer(Base):
     answer_id = Column(Integer, primary_key=True, index=True)
     answer_text = Column(Text, nullable=False)
     answer_date = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
-    answer_response_time = Column(Time, nullable=False)
+    answer_response_time = Column(Integer, nullable=False)
     answer_feedback = Column(String(10), nullable=True)
     query_id = Column(Integer, ForeignKey("query.query_id"), nullable=False)
     

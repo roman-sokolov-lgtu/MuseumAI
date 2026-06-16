@@ -1,7 +1,6 @@
 import { authFetch } from "../utils/api";
 import { useState, useEffect } from "react";
 import {
-  Download,
   FileText,
   ThumbsUp,
   ThumbsDown,
@@ -142,7 +141,7 @@ export default function Analytics() {
 
   return (
     <div className="p-8 bg-gray-50 dark:bg-gray-900 min-h-full">
-      {/* Header */}
+      
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Аналитика</h1>
@@ -154,7 +153,7 @@ export default function Analytics() {
         </Button>
       </div>
 
-      {/* Top Stats */}
+      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
         {topStats.map((stat) => {
           const Icon = stat.icon;
@@ -176,7 +175,7 @@ export default function Analytics() {
         })}
       </div>
 
-      {/* Sessions & Questions chart + Popular Exhibits */}
+      
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Сессии и вопросы (7 дней)</h2>
@@ -207,9 +206,9 @@ export default function Analytics() {
         </div>
       </div>
 
-      {/* Feedback + Duration */}
+      
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {/* Satisfaction metrics */}
+        
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Удовлетворённость ответами</h2>
           <div className="grid grid-cols-3 gap-4 mb-4">
@@ -257,7 +256,7 @@ export default function Analytics() {
           </ResponsiveContainer>
         </div>
 
-        {/* Session Duration */}
+        
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Длительность сессий</h2>
           <ResponsiveContainer width="100%" height={280}>
@@ -281,7 +280,7 @@ export default function Analytics() {
         </div>
       </div>
 
-      {/* System Status — only DB */}
+      
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Статус системы</h2>
         <div className="flex items-center gap-3">
