@@ -49,3 +49,14 @@ docker-compose up -d --build
 * **Панель администратора**: `http://localhost:3000` (Логин: `admin`, Пароль: `password123`)
 * **Swagger (API документация)**: `http://localhost:8000/docs`
 * **База данных (Adminer)**: `http://localhost:8080` (Пользователь: `user`, Пароль: `secure_museum_password_2026`, БД: `museum`)
+
+## ⚙️ Настройка переменных окружения бэкенда (`.env`)
+
+В корне проекта находится файл `.env`, который содержит ключевые параметры конфигурации бэкенда:
+* `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` — данные для создания базы данных в Docker.
+* `DATABASE_URL` — строка подключения к СУБД PostgreSQL.
+* `JWT_SECRET_KEY` / `JWT_ALGORITHM` / `JWT_ACCESS_TOKEN_EXPIRE_MINUTES` — настройки генерации и валидации JWT-токенов администратора.
+* `CORS_ALLOWED_ORIGINS` — список доверенных источников для обхода CORS-ограничений (включая локальные хосты и IP-адреса для мобильного приложения).
+* `OLLAMA_URL` — адрес API-сервера нейросети Ollama (по умолчанию `http://host.docker.internal:11434`).
+* `OLLAMA_MODEL` — название используемой языковой модели (по умолчанию `gemma2:9b`).
+
