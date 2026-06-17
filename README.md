@@ -36,9 +36,12 @@ graph TD
 
 Для запуска проекта на вашем компьютере должны быть установлены:
 
-1. **Docker Desktop** (для запуска всего серверного стека: PostgreSQL, бэкенд, Ollama, панель администратора).
-2. **Node.js** (версия 18 или выше) и пакетный менеджер **npm** (для сборки мобильного приложения).
-3. **Java 21 JDK** (для сборки мобильного приложения в APK).
+1. **Git** — для получения исходного кода проекта. Скачать: [git-scm.com/downloads](https://git-scm.com/downloads).
+2. **Docker Desktop** (для запуска всего серверного стека: PostgreSQL, бэкенд, Ollama, панель администратора). Скачать: [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop/).
+   * На Windows Docker Desktop требует включённого **WSL2** (установщик предложит включить автоматически).
+3. **Node.js** (версия 18 или выше) и пакетный менеджер **npm** (для сборки мобильного приложения). Скачать: [nodejs.org](https://nodejs.org/) (LTS-версия).
+4. **Java 21 JDK** (для сборки мобильного приложения в APK). Скачать: [Microsoft JDK 21](https://learn.microsoft.com/ru-ru/java/openjdk/download) (OpenJDK).
+5. **Android Studio** (для сборки APK и доступа к Android SDK). Скачать: [developer.android.com/studio](https://developer.android.com/studio).
 
 **Ресурсы для Ollama (модель `gemma2:9b`):**
 
@@ -52,6 +55,19 @@ graph TD
 ---
 
 ## 🚀 Пошаговое руководство по развертыванию
+
+### Шаг 0. Получите исходный код
+
+Склонируйте репозиторий и перейдите в папку проекта:
+
+```bash
+git clone https://github.com/roman-sokolov-lgtu/MuseumAI.git
+cd MuseumAI
+```
+
+Все команды далее выполняются из корневой папки проекта, если не указано иное.
+
+---
 
 ### Шаг 1. Настройка и запуск серверной части (Docker)
 
@@ -132,7 +148,7 @@ docker compose exec ollama ollama list
 #### 1.5. Проверьте работоспособность
 
 1. Откройте Swagger: `http://localhost:8000/docs`
-2. Вызовите `GET /api/health` — оба поля должны быть `"ok"`:
+2. Вызовите `GET /api/health`: нажмите на эндпоинт → **Try it out** → **Execute**. В ответе оба поля должны быть `"ok"`:
    ```json
    {"database": "ok", "ollama": "ok"}
    ```
@@ -175,9 +191,14 @@ deploy:
 
 Проверка, что Ollama видит GPU:
 
-```bash
-docker compose logs ollama | findstr CUDA
-```
+* **На Windows (PowerShell / cmd):**
+  ```powershell
+  docker compose logs ollama | findstr CUDA
+  ```
+* **На Linux / macOS:**
+  ```bash
+  docker compose logs ollama | grep CUDA
+  ```
 
 Ожидаемая строка в логах: `library=CUDA ... NVIDIA GeForce RTX 3080`.
 
@@ -218,8 +239,9 @@ OLLAMA_URL=http://host.docker.internal:11434
 Для работы приложения на реальном телефоне бэкенд и телефон должны находиться в одной локальной сети (например, подключены к одному Wi-Fi).
 
 1. **Узнайте локальный IP-адрес вашего компьютера:**
-   * **На Windows:** Откройте командную строку и введите `ipconfig`. Найдите строку *IPv4-адрес* вашего беспроводного адаптера (например, `192.168.1.50`).
+   * **На Windows:** Откройте командную строку и введите `ipconfig`. Найдите строку *IPv4-адрес* **беспроводного (Wi-Fi) адаптера** (например, `192.168.1.50`). Не берите адрес Ethernet-адаптера — телефон по Wi-Fi до него не достучится.
    * **На Linux / macOS:** Откройте терминал и введите `ip a` или `ifconfig`.
+   > Важно: компьютер и телефон должны быть подключены к **одной Wi-Fi сети**.
 
 2. **Создайте файл конфигурации мобильного приложения:**
    Перейдите в папку `mobile-app/` и скопируйте шаблон `.env.example` в рабочий файл `.env`:
@@ -258,13 +280,41 @@ OLLAMA_URL=http://host.docker.internal:11434
    * **Способ А (Через Android Studio — рекомендуется):**
      Откройте папку `mobile-app/android` в Android Studio. Дождитесь индексации проекта. В верхнем меню выберите **Build -> Build Bundle(s) / APK(s) -> Build APK(s)**. После завершения сборки нажмите *Locate* во всплывающем окне, чтобы найти файл.
    * **Способ Б (Через консоль):**
-     Убедитесь, что у вас прописан путь к установленной Java JDK 21. Выполните сборку через Gradle-скрипт (на Windows):
-     ```powershell
-     $env:JAVA_HOME="C:\Program Files\Microsoft\jdk-21.0.11.10-hotspot"
-     .\gradlew.bat assembleDebug
-     ```
+     Убедитесь, что у вас прописан путь к установленной Java JDK 21 (переменная окружения `JAVA_HOME`). Находясь в папке `mobile-app/android`, выполните сборку через Gradle:
+     * **На Windows (PowerShell):**
+       ```powershell
+       $env:JAVA_HOME="C:\Program Files\Microsoft\jdk-21.0.11.10-hotspot"
+       .\gradlew.bat assembleDebug
+       ```
+     * **На Linux / macOS:**
+       ```bash
+       export JAVA_HOME=/usr/lib/jvm/jdk-21
+       ./gradlew assembleDebug
+       ```
      Готовый файл приложения будет находиться по пути:
      `mobile-app/android/app/build/outputs/apk/debug/app-debug.apk`
+
+---
+
+### Шаг 4. Установка приложения на телефон
+
+После сборки APK-файл нужно перенести на Android-устройство и запустить.
+
+1. **Перенесите APK на телефон** одним из способов:
+   * **USB-кабель:** скопируйте `app-debug.apk` в папку загрузок телефона.
+   * **Облако / мессенджер:** загрузите файл в Google Drive, Telegram «Избранное» и т.п., затем скачайте на телефон.
+   * **ADB (для разработчиков):** при подключённом телефоне с отладкой по USB:
+     ```bash
+     adb install mobile-app/android/app/build/outputs/apk/debug/app-debug.apk
+     ```
+
+2. **Разрешите установку из неизвестных источников:**
+   При попытке открыть `.apk` Android предложит перейти в настройки — разрешите установку для файла/браузера, через который открываете. На Android 8+ это делается для конкретного источника.
+
+3. **Запустите приложение:**
+   Иконка «MuseumAI» появится в списке приложений. При первом запуске приложение запросит разрешения на **камеру** и **микрофон** — разрешите оба, они нужны для сканера QR-кодов и голосового ввода.
+
+4. **Убедитесь, что телефон и компьютер в одной Wi-Fi сети** (иначе приложение не достучится до бэкенда). Откройте приложение и нажмите «Начать сканирование».
 
 ---
 
@@ -286,7 +336,18 @@ OLLAMA_URL=http://host.docker.internal:11434
 
 ---
 
-## 🔧 Устранение неполадок (Ollama)
+## 🔧 Устранение неполадок
+
+### Проблемы с запуском контейнеров
+
+| Симптом | Решение |
+|---------|---------|
+| `Bind for 0.0.0.0:5432 failed: port is already allocated` (или 3000/8000/8080/11434) | Порт занят другой программой. Часто это локальный PostgreSQL (5432) или Skype (80/443). Остановите конфликтующий процесс или поменяйте порт в `docker-compose.yml` (левая часть, например `"5433:5432"`). |
+| Контейнер `db` падает сразу после старта | Проверьте логи: `docker compose logs db`. Если упоминается `init.sql` — возможно, повреждён том. Пересоздайте: `docker compose down -v` (⚠️ удалит данные БД), затем `docker compose up -d --build`. |
+| `docker compose up` падает на сборке образа | Убедитесь, что Docker Desktop запущен и работает. На Windows проверьте, что включён WSL2 (Settings → Resources → WSL Integration). |
+| Пересоздать всё с нуля | `docker compose down -v` (удалит данные БД и модели!), затем `docker compose up -d --build` |
+
+### Проблемы с Ollama / нейросетью
 
 | Симптом | Решение |
 |---------|---------|
@@ -295,9 +356,17 @@ OLLAMA_URL=http://host.docker.internal:11434
 | Ответы очень медленные | Нормально на CPU. Попробуйте `gemma2:2b` или включите GPU (см. шаг 1.7). |
 | `ollama-pull` завершился с ошибкой | `docker compose logs ollama-pull` — часто проблема с интернетом. Повторите: `docker compose up ollama-pull` |
 | Нехватка памяти | Увеличьте RAM в Docker Desktop (Settings → Resources → Memory → 16 GB+) или смените модель на `gemma2:2b`. |
-| Пересоздать всё с нуля | `docker compose down -v` (удалит данные БД и модели!), затем `docker compose up -d --build` |
 
-Полезные команды:
+### Проблемы с API / приложением
+
+| Симптом | Решение |
+|---------|---------|
+| Приложение не может подключиться к серверу (ошибка сети) | Проверьте: 1) компьютер и телефон в одной Wi-Fi сети; 2) IP-адрес в `mobile-app/.env` совпадает с IPv4 компьютера (`ipconfig`); 3) брандмауэр Windows не блокирует порт 8000. |
+| `/api/ask` или `/api/welcome` возвращают **HTTP 429** | Сработал лимит запросов (10 в минуту на IP). Подождите 60 секунд — это не ошибка, а защита от перегрузки. |
+| Ответ от ИИ пустой или обрывается | Модель загружена не полностью. Перепроверьте: `docker compose exec ollama ollama list`. |
+| 401 Unauthorized в Swagger | Нажмите замочек 🔒 в правом верхнем углу → введите `admin` / `password123` → Authorize. |
+
+### Часто используемые команды
 
 ```bash
 # Статус всех контейнеров
@@ -311,6 +380,9 @@ docker compose exec ollama ollama list
 
 # Тестовый запрос к модели напрямую
 docker compose exec ollama ollama run gemma2:9b "Привет"
+
+# Посмотреть, какой процесс занимает порт (Windows) — например 5432
+netstat -ano | findstr :5432
 ```
 
 ---
