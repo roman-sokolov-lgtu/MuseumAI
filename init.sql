@@ -111,6 +111,21 @@ CREATE TABLE public.exhibit (
 );
 
 
+--
+-- Name: exhibit exhibit_qr_unique; Type: CONSTRAINT; Schema: public; Owner: user
+--
+
+ALTER TABLE ONLY public.exhibit
+    ADD CONSTRAINT exhibit_qr_unique UNIQUE (exhibit_qr);
+
+
+--
+-- Name: ix_exhibit_exhibit_qr; Type: INDEX; Schema: public; Owner: user
+--
+
+CREATE INDEX ix_exhibit_exhibit_qr ON public.exhibit USING btree (exhibit_qr);
+
+
 ALTER TABLE public.exhibit OWNER TO "user";
 
 --
@@ -263,10 +278,6 @@ COPY public.admin (admin_id, admin_login, admin_password, admin_email) FROM stdi
 -- Data for Name: exhibit; Type: TABLE DATA; Schema: public; Owner: user
 --
 
-COPY public.exhibit (exhibit_id, exhibit_name, exhibit_description, exhibit_qr, exhibit_period, exhibit_category, exhibit_material, exhibit_author, admin_id) FROM stdin;
-
-\.
-
 
 --
 -- Data for Name: query; Type: TABLE DATA; Schema: public; Owner: user
@@ -293,28 +304,28 @@ SELECT pg_catalog.setval('public.admin_admin_id_seq', 1, true);
 -- Name: answer_answer_id_seq; Type: SEQUENCE SET; Schema: public; Owner: user
 --
 
-SELECT pg_catalog.setval('public.answer_answer_id_seq', 35, true);
+SELECT pg_catalog.setval('public.answer_answer_id_seq', 1, false);
 
 
 --
 -- Name: exhibit_exhibit_id_seq; Type: SEQUENCE SET; Schema: public; Owner: user
 --
 
-SELECT pg_catalog.setval('public.exhibit_exhibit_id_seq', 3, true);
+SELECT pg_catalog.setval('public.exhibit_exhibit_id_seq', 1, false);
 
 
 --
 -- Name: query_query_id_seq; Type: SEQUENCE SET; Schema: public; Owner: user
 --
 
-SELECT pg_catalog.setval('public.query_query_id_seq', 35, true);
+SELECT pg_catalog.setval('public.query_query_id_seq', 1, false);
 
 
 --
 -- Name: session_session_id_seq; Type: SEQUENCE SET; Schema: public; Owner: user
 --
 
-SELECT pg_catalog.setval('public.session_session_id_seq', 6, true);
+SELECT pg_catalog.setval('public.session_session_id_seq', 1, false);
 
 
 --

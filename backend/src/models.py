@@ -18,7 +18,7 @@ class Exhibit(Base):
     exhibit_id = Column(Integer, primary_key=True, index=True)
     exhibit_name = Column(String(255), nullable=False)
     exhibit_description = Column(Text, nullable=False)
-    exhibit_qr = Column(String(255), nullable=False)
+    exhibit_qr = Column(String(255), nullable=False, unique=True, index=True)
     exhibit_period = Column(String(100), nullable=False)
     exhibit_category = Column(String(100), nullable=False)
     exhibit_material = Column(String(255), nullable=False)

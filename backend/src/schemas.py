@@ -1,6 +1,13 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from typing import Optional, List
 import datetime
+
+
+def _normalize_text(value: str) -> str:
+    if isinstance(value, str):
+        return " ".join(value.split())
+    return value
+
 
 class ExhibitBase(BaseModel):
     exhibit_name: str
@@ -10,6 +17,18 @@ class ExhibitBase(BaseModel):
     exhibit_category: str
     exhibit_material: str
     exhibit_author: str
+
+    @validator(
+        "exhibit_name",
+        "exhibit_description",
+        "exhibit_period",
+        "exhibit_category",
+        "exhibit_material",
+        "exhibit_author",
+        pre=True,
+    )
+    def strip_and_collapse_spaces(cls, v):
+        return _normalize_text(v)
 
 class ExhibitCreate(ExhibitBase):
     admin_id: int = 1

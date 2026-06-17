@@ -2,6 +2,8 @@ from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session, joinedload, selectinload
 from . import models, database, schemas
+from .rate_limit import make_rate_limiter
+from .models import get_utc_now
 from typing import List
 import httpx
 from sqlalchemy import text, func
@@ -18,12 +20,33 @@ load_dotenv()
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "fallback_secret_key")
 ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "1440"))
-OLLAMA_URL = os.getenv("OLLAMA_URL", "http://host.docker.internal:11434")
+OLLAMA_URL = os.getenv("OLLAMA_URL", "http://ollama:11434")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "gemma2:9b")
 
-def get_utc_now():
-    return datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+ADMIN_DEFAULT_LOGIN = os.getenv("ADMIN_DEFAULT_LOGIN", "admin")
+ADMIN_DEFAULT_PASSWORD = os.getenv("ADMIN_DEFAULT_PASSWORD", "password123")
+ADMIN_DEFAULT_EMAIL = os.getenv("ADMIN_DEFAULT_EMAIL", "admin@museum.ru")
 
+DEFAULT_CORS_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://localhost",
+    "capacitor://localhost",
+]
+CORS_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
+    if origin.strip()
+] or DEFAULT_CORS_ORIGINS
+
+DATE_TIME_RULE = (
+    "ЗАПРЕТ НА ТЕКУЩУЮ ДАТУ И ВРЕМЯ:\n"
+    "- У тебя НЕТ доступа к текущей дате, времени, году, месяцу, числу или дню недели. Ты не знаешь, «сейчас» какой год.\n"
+    "- На любые вопросы о сегодняшней/текущей дате, времени, годе, дне недели, числе, месяце, «который час», «какой сегодня день» — "
+    "КАТЕГОРИЧЕСКИ ЗАПРЕЩЕНО называть какие-либо даты, годы или время, в том числе из своих знаний модели.\n"
+    "- Отвечай только так: «Прошу прощения, я виртуальный гид по экспонатам и не располагаю информацией о текущей дате или времени. "
+    "Посмотрите на телефон или часы, либо обратитесь к сотрудникам музея. Могу рассказать об этом экспонате — задайте вопрос о произведении и я с радостью отвечу!»\n"
+)
 
 import bcrypt
 
@@ -70,12 +93,12 @@ models.Base.metadata.create_all(bind=database.engine)
 
 def create_default_admin():
     db = database.SessionLocal()
-    admin = db.query(models.Admin).filter(models.Admin.admin_email == "admin@museum.ru").first()
+    admin = db.query(models.Admin).filter(models.Admin.admin_email == ADMIN_DEFAULT_EMAIL).first()
     if not admin:
         new_admin = models.Admin(
-            admin_login="admin",
-            admin_password=get_password_hash("password123"),
-            admin_email="admin@museum.ru"
+            admin_login=ADMIN_DEFAULT_LOGIN,
+            admin_password=get_password_hash(ADMIN_DEFAULT_PASSWORD),
+            admin_email=ADMIN_DEFAULT_EMAIL
         )
         db.add(new_admin)
         db.commit()
@@ -87,11 +110,13 @@ app = FastAPI(title="Museum AI Assistant API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.getenv("CORS_ALLOWED_ORIGINS", "*").split(","),
+    allow_origins=CORS_ORIGINS,
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.middleware("http")(make_rate_limiter(max_requests=10, window_seconds=60, paths=["/api/ask", "/api/welcome"]))
 
 
 @app.get("/")
@@ -243,6 +268,7 @@ async def ask_assistant(request: AskRequest, db: Session = Depends(database.get_
             "- Это первое сообщение от посетителя. Если посетитель просто поздоровался (например, 'Привет', 'Добрый день'), напиши краткое приветствие и вежливо предложи задать вопрос об экспонате.\n"
             "- Если посетитель сразу задал конкретный вопрос, ответь на него четко и кратко (2-4 предложения), основываясь только на предоставленном описании.\n"
             "- Ты имеешь право отвечать ТОЛЬКО на вопросы, непосредственно связанные с текущим экспонатом (его создание, автор, сюжет, материалы, исторический контекст) или общепринятыми искусствоведческими терминами, связанными с ним. На любые посторонние темы вежливо отказывайся отвечать.\n"
+            + DATE_TIME_RULE +
             "- Никогда не выдумывай факты и не галлюцинируй. Если информации нет в описании, вежливо скажи об этом.\n"
             "- ТОЛЬКО РУССКИЙ ЯЗЫК.\n\n"
             "ИНФОРМАЦИЯ ОБ ЭКСПОНАТЕ:\n"
@@ -257,7 +283,8 @@ async def ask_assistant(request: AskRequest, db: Session = Depends(database.get_
             "1. СТРОЖАЙШИЙ ЗАПРЕТ НА ГАЛЛЮЦИНАЦИИ И ФАНТАЗИИ:\n"
             "- Тебе КАТЕГОРИЧЕСКИ ЗАПРЕЩЕНО выдумывать, придумывать или сочинять любые факты, цены, цифры, даты, события или исторические детали.\n"
             "- Запрещено придумывать коммерческие и организационные детали: наличие сувенирных магазинов, возможность покупки экспоната, копий или репродукций, их стоимость и цены. На любые вопросы о покупке, заказе или стоимости копий отвечай строго: «Как виртуальный гид, я не располагаю коммерческой или организационной информацией (о стоимости, покупке копий, услугах). Пожалуйста, обратитесь к сотрудникам музея или администрации лично.»\n"
-            "- Если посетитель спрашивает о терминах, фактах или темах, не связанных напрямую с текущим экспонатом (Название: '{exhibit.exhibit_name}', Автор: '{exhibit.exhibit_author}'), ты имеешь право дать краткий и точный ответ ТОЛЬКО если ты уверен в фактах на 100% из своей базы знаний. Если ты не уверен, или вопрос касается малоизвестных сюжетов, фильмов, географических или исторических фактов — ты ОБЯЗАН вежливо сказать: «К сожалению, у меня нет точных или подтвержденных данных по этому вопросу.» и сразу перевести разговор обратно на экспонат.\n"
+            + DATE_TIME_RULE +
+            f"- Если посетитель спрашивает о терминах, фактах или темах, не связанных напрямую с текущим экспонатом (Название: '{exhibit.exhibit_name}', Автор: '{exhibit.exhibit_author}'), ты имеешь право дать краткий и точный ответ ТОЛЬКО если ты уверен в фактах на 100% из своей базы знаний. Если ты не уверен, или вопрос касается малоизвестных сюжетов, фильмов, географических или исторических фактов — ты ОБЯЗАН вежливо сказать: «К сожалению, у меня нет точных или подтвержденных данных по этому вопросу.» и сразу перевести разговор обратно на экспонат.\n"
             f"- После краткого ответа на посторонний вопрос или термин обязательно сделай мягкий переход обратно к обсуждению текущего экспоната. Пример: «Хотя это напрямую не связано с экспонатом \"{exhibit.exhibit_name}\", [краткий точный факт]. Вернемся к нашему произведению: хотите узнать о...?»\n"
             "2. ВОПРОСЫ ПО ЭКСПОНАТУ И ИСКУССТВУ:\n"
             "- На вопросы по экспонату отвечай развернуто (2-4 предложения), строго используя предоставленное описание экспоната.\n"
