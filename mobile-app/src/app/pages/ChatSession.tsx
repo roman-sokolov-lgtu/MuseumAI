@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { Message } from "../types/session";
 import { useTheme } from "../context/ThemeContext";
-import { getExhibitByQr, sendMessage, submitFeedback, getWelcome } from "../api";
+import { getExhibitByQr, sendMessage, submitFeedback, getWelcome, ApiError, RATE_LIMITED_MESSAGE } from "../api";
 import { TextToSpeech } from '@capacitor-community/text-to-speech';
 import { SpeechRecognition } from '@capacitor-community/speech-recognition';
 
@@ -60,7 +60,10 @@ export function ChatSession() {
             setMessages([welcomeMessage]);
             setChatHistory([{ role: "assistant", content: aiWelcome }]);
           } catch (err) {
-            const fallbackContent = `Здравствуйте! Я ваш виртуальный ассистент. Вы находитесь у экспоната "${data.name}". О чем бы вы хотели узнать?`;
+            const isRateLimited = err instanceof ApiError && err.status === 429;
+            const fallbackContent = isRateLimited
+              ? RATE_LIMITED_MESSAGE
+              : `Здравствуйте! Я ваш виртуальный ассистент. Вы находитесь у экспоната "${data.name}". О чем бы вы хотели узнать?`;
             const fallbackMessage: Message = {
               id: "welcome",
               type: "assistant",
@@ -139,10 +142,14 @@ export function ChatSession() {
       setMessages((prev) => [...prev, assistantMessage]);
       setChatHistory([...newHistory, { role: "assistant", content: answer }]);
     } catch (err: any) {
+      const isRateLimited = err instanceof ApiError && err.status === 429;
+      const errorContent = isRateLimited
+        ? RATE_LIMITED_MESSAGE
+        : `⚠️ Не удалось получить ответ от ИИ-гида. Проверьте подключение к серверу и попробуйте ещё раз.`;
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: "assistant",
-        content: `⚠️ Ошибка: ${err.message}. Убедитесь, что Ollama запущена на сервере.`,
+        content: errorContent,
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
