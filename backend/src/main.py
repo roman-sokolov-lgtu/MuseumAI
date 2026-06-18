@@ -8,6 +8,7 @@ from typing import List
 import httpx
 from sqlalchemy import text, func
 import os
+import asyncio
 from dotenv import load_dotenv
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
@@ -39,13 +40,63 @@ CORS_ORIGINS = [
     if origin.strip()
 ] or DEFAULT_CORS_ORIGINS
 
+# ── Параметры стратегии повторных запросов (Retry) ──────────────────
+# 4 попытки, экспоненциальная задержка между ними: 1 → 2 → 4 секунды.
+# Задержка введена намеренно: при пиковой нагрузке немедленный повтор
+# запроса лишь усиливает перегрузку Ollama, а экспоненциальная пауза
+# даёт сервису время разгрести очередь.
+OLLAMA_MAX_RETRIES = 4
+OLLAMA_BASE_DELAY = 1.0  # сек; следующая = 2·предыдущая
+
+FALLBACK_MESSAGE = (
+    "Приносим извинения, виртуальный гид сейчас обрабатывает слишком много запросов. "
+    "Пожалуйста, повторите ваш вопрос через пару секунд или ознакомьтесь с базовой справкой об экспонате."
+)
+
+
+async def query_ollama_with_retry(payload: dict, *, client: httpx.AsyncClient | None = None) -> str | None:
+    """
+    Вызов Ollama /api/chat со стратегией retry (4 попытки) и экспоненциальной
+    задержкой. Возвращает текст ответа модели либо None, если все попытки
+    провалились (тогда вызывающий код формирует fallback-сообщение).
+    """
+    owns_client = client is None
+    if owns_client:
+        client = httpx.AsyncClient(timeout=300.0)
+
+    last_error: Exception | None = None
+    try:
+        for attempt in range(1, OLLAMA_MAX_RETRIES + 1):
+            try:
+                response = await client.post(f"{OLLAMA_URL}/api/chat", json=payload)
+                response.raise_for_status()
+                return response.json()["message"]["content"]
+            except Exception as e:
+                last_error = e
+                print(f"Ollama attempt {attempt}/{OLLAMA_MAX_RETRIES} failed: {e}")
+                if attempt < OLLAMA_MAX_RETRIES:
+                    delay = OLLAMA_BASE_DELAY * (2 ** (attempt - 1))
+                    print(f"  → retrying in {delay:.1f}s ...")
+                    await asyncio.sleep(delay)
+    finally:
+        if owns_client:
+            await client.aclose()
+
+    print(f"Ollama: all {OLLAMA_MAX_RETRIES} attempts failed. Last error: {last_error}")
+    return None
+
+
 DATE_TIME_RULE = (
-    "ЗАПРЕТ НА ТЕКУЩУЮ ДАТУ И ВРЕМЯ:\n"
-    "- У тебя НЕТ доступа к текущей дате, времени, году, месяцу, числу или дню недели. Ты не знаешь, «сейчас» какой год.\n"
-    "- На любые вопросы о сегодняшней/текущей дате, времени, годе, дне недели, числе, месяце, «который час», «какой сегодня день» — "
-    "КАТЕГОРИЧЕСКИ ЗАПРЕЩЕНО называть какие-либо даты, годы или время, в том числе из своих знаний модели.\n"
-    "- Отвечай только так: «Прошу прощения, я виртуальный гид по экспонатам и не располагаю информацией о текущей дате или времени. "
+    "ЗАПРЕТ НА ТЕКУЩУЮ ДАТУ, ВРЕМЯ И ВНЕШНИЕ СВЕДЕНИЯ:\n"
+    "- У тебя НЕТ доступа к текущей дате, времени, году, месяцу, числу, дню недели, погоде, новостям, курсам валют, расписаниям или любым другим «живым» данным. Ты не знаешь, «сейчас» какой год и какая погода.\n"
+    "- На вопросы ТОЛЬКО о текущей дате, времени, годе, дне недели, числе, месяце, «который час», «какой сегодня день» — "
+    "КАТЕГОРИЧЕСКИ ЗАПРЕЩЕНО называть какие-либо даты, годы или время, в том числе из своих знаний модели. "
+    "Отвечай строго: «Прошу прощения, я виртуальный гид по экспонатам и не располагаю информацией о текущей дате или времени. "
     "Посмотрите на телефон или часы, либо обратитесь к сотрудникам музея. Могу рассказать об этом экспонате — задайте вопрос о произведении и я с радостью отвечу!»\n"
+    "- ВАЖНО: упоминать «посмотрите на часы» или «посмотрите на телефон» разрешено ТОЛЬКО в этом единственном ответе про дату/время.\n"
+    "- На вопросы о погоде, новостях, курсах валют, спорте, пробках и любых других внешних/текущих событиях НЕ используй заготовку про часы. "
+    "Отвечай коротко и без ссылок на время: «К сожалению, я виртуальный гид и не располагаю такой информацией — я рассказываю только об этом экспонате. "
+    "Могу подробнее рассказать о его истории или сюжете?»\n"
 )
 
 import bcrypt
@@ -209,24 +260,20 @@ async def get_welcome(request: WelcomeRequest, db: Session = Depends(database.ge
     )
     
     try:
-        async with httpx.AsyncClient(timeout=300.0) as client:
-            response = await client.post(
-                f"{OLLAMA_URL}/api/chat",
-                json={
-                    "model": OLLAMA_MODEL,
-                    "messages": [
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": "Поприветствуй посетителя."}
-                    ],
-                    "stream": False,
-                    "options": {"temperature": 0.3}
-                }
-            )
-            response.raise_for_status()
-            answer = response.json()["message"]["content"]
+        answer = await query_ollama_with_retry({
+            "model": OLLAMA_MODEL,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": "Поприветствуй посетителя."}
+            ],
+            "stream": False,
+            "options": {"temperature": 0.3}
+        })
+        if answer is None:
+            answer = FALLBACK_MESSAGE
     except Exception as e:
         print(f"Error in get_welcome: {e}")
-        answer = "Приносим извинения, виртуальный гид сейчас обрабатывает слишком много запросов. Пожалуйста, повторите ваш вопрос через пару секунд или ознакомьтесь с базовой справкой об экспонате."
+        answer = FALLBACK_MESSAGE
     
     return {"answer": answer}
 
@@ -337,20 +384,17 @@ async def ask_assistant(request: AskRequest, db: Session = Depends(database.get_
     start_time = time.time()
     try:
         async with httpx.AsyncClient(timeout=300.0) as client:
-            response = await client.post(
-                f"{OLLAMA_URL}/api/chat",
-                json={
-                    "model": OLLAMA_MODEL, 
-                    "messages": messages, 
-                    "stream": False,
-                    "options": {"temperature": 0.0}
-                }
-            )
-            response.raise_for_status()
-            answer = response.json()["message"]["content"]
+            answer = await query_ollama_with_retry({
+                "model": OLLAMA_MODEL,
+                "messages": messages,
+                "stream": False,
+                "options": {"temperature": 0.0}
+            }, client=client)
+        if answer is None:
+            answer = FALLBACK_MESSAGE
     except Exception as e:
         print(f"Error in ask_assistant: {e}")
-        answer = "Приносим извинения, виртуальный гид сейчас обрабатывает слишком много запросов. Пожалуйста, повторите ваш вопрос через пару секунд или ознакомьтесь с базовой справкой об экспонате."
+        answer = FALLBACK_MESSAGE
 
     response_time_secs = time.time() - start_time
     response_time_ms = int(response_time_secs * 1000)
