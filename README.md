@@ -40,8 +40,16 @@ graph TD
 2. **Docker Desktop** (для запуска всего серверного стека: PostgreSQL, бэкенд, Ollama, панель администратора). Скачать: [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop/).
    * На Windows Docker Desktop требует включённого **WSL2** (установщик предложит включить автоматически).
 3. **Node.js** (версия 18 или выше) и пакетный менеджер **npm** (для сборки мобильного приложения). Скачать: [nodejs.org](https://nodejs.org/) (LTS-версия).
-4. **Java 21 JDK** (для сборки мобильного приложения в APK). Скачать: [Microsoft JDK 21](https://learn.microsoft.com/ru-ru/java/openjdk/download) (OpenJDK).
+4. **Java 17 JDK** (для сборки мобильного приложения в APK). Скачать: [Microsoft JDK 17](https://learn.microsoft.com/ru-ru/java/openjdk/download) (OpenJDK).
 5. **Android Studio** (для сборки APK и доступа к Android SDK). Скачать: [developer.android.com/studio](https://developer.android.com/studio).
+
+**Ресурсы для сервера:**
+
+| Ресурс | Минимум | Примечание |
+|--------|---------|------------|
+| RAM | от 16 ГБ | Для загрузки весов языковой модели |
+| SSD | от 256 ГБ | Под БД PostgreSQL, веса моделей и ОС |
+| GPU | опционально | NVIDIA, от 8 ГБ VRAM — ускоряет генерацию в разы |
 
 **Ресурсы для Ollama (модель `gemma2:9b`):**
 
@@ -280,15 +288,15 @@ OLLAMA_URL=http://host.docker.internal:11434
    * **Способ А (Через Android Studio — рекомендуется):**
      Откройте папку `mobile-app/android` в Android Studio. Дождитесь индексации проекта. В верхнем меню выберите **Build -> Build Bundle(s) / APK(s) -> Build APK(s)**. После завершения сборки нажмите *Locate* во всплывающем окне, чтобы найти файл.
    * **Способ Б (Через консоль):**
-     Убедитесь, что у вас прописан путь к установленной Java JDK 21 (переменная окружения `JAVA_HOME`). Находясь в папке `mobile-app/android`, выполните сборку через Gradle:
+     Убедитесь, что у вас прописан путь к установленной Java JDK 17 (переменная окружения `JAVA_HOME`). Находясь в папке `mobile-app/android`, выполните сборку через Gradle:
      * **На Windows (PowerShell):**
        ```powershell
-       $env:JAVA_HOME="C:\Program Files\Microsoft\jdk-21.0.11.10-hotspot"
+       $env:JAVA_HOME="C:\Program Files\Microsoft\jdk-17.0.14.7-hotspot"
        .\gradlew.bat assembleDebug
        ```
      * **На Linux / macOS:**
        ```bash
-       export JAVA_HOME=/usr/lib/jvm/jdk-21
+       export JAVA_HOME=/usr/lib/jvm/jdk-17
        ./gradlew assembleDebug
        ```
      Готовый файл приложения будет находиться по пути:
