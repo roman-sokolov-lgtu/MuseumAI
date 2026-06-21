@@ -1,24 +1,34 @@
-node_modules/
-.env
+# ── Артефакты PowerShell: в cmd "nul" — это чёрная дыра, а в PowerShell
+#    команда вида "cmd > nul" создаёт реальный файл с именем "nul".
+#    Это мусор, он не должен попадать в репозиторий.
+nul
+**/nul
+
+# ── Дампы БД (бэкапы pg_dump). init.sql ниже явно исключён из игнорирования.
+dump_full_*.sql
+*.dump
+*.backup
+
+# ── Python (бэкенд) ──────────────────────────────────────────────────
 __pycache__/
-*.pyc
-venv/
-env/
+*.py[cod]
+*.egg-info/
 .venv/
-build/
+venv/
+.env
+.env.*
+!.env.example
+
+# ── Node.js (моб. приложение, админ-панель) ──────────────────────────
+node_modules/
 dist/
-*.apk
-postgres_data/
+build/
+*.log
+npm-debug.log*
+
+# ── IDE / ОС ─────────────────────────────────────────────────────────
 .idea/
 .vscode/
-android/app/build/
-android/.gradle/
-android/capacitor.settings.gradle
-admin-panel/node_modules/
-mobile-app/node_modules/
-mobile-app/android/app/build/
-mobile-app/android/.gradle/
-
-app-pc.apk
-eval/
-thesis_text.json
+*.swp
+.DS_Store
+Thumbs.db
