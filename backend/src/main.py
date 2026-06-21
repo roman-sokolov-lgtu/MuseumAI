@@ -211,24 +211,29 @@ LANGUAGE_RULE = "=== ЯЗЫК ===\nОтвечай ТОЛЬКО на русско
 
 def build_system_prompt(exhibit_context: str, exhibit_name: str,
                         exhibit_author: str, is_first_message: bool) -> str:
-    """Сборка системного промпта из модулей в зависимости от ветки диалога."""
+    """Сборка системного промпта из модулей.
+
+    Все поведенческие блоки применяются к любому сообщению, поскольку первый
+    вопрос посетителя может быть любым (о другом экспонате, об офтопе, о
+    термине). FIRST_CONTACT_RULE лишь ДОБАВЛЯЕТ правила реакции на приветствие
+    для первого сообщения, а не заменяет остальные блоки.
+    """
+    # Поведенческие блоки — для всех сообщений без исключения
     prompt = (
         ROLE_RULE
         + SECURITY_RULE
         + GROUNDING_RULE
+        + TERMS_RULE
         + COMMERCIAL_RULE
         + DATE_TIME_RULE
+        + other_exhibits_rule(exhibit_name)
+        + OFFTOPIC_RULE
+        + DIALOGUE_RULE
     )
 
+    # Дополнительный блок только для первого сообщения
     if is_first_message:
         prompt += FIRST_CONTACT_RULE
-    else:
-        prompt += (
-            other_exhibits_rule(exhibit_name)
-            + OFFTOPIC_RULE
-            + TERMS_RULE
-            + DIALOGUE_RULE
-        )
 
     prompt += LANGUAGE_RULE
     prompt += exhibit_context
